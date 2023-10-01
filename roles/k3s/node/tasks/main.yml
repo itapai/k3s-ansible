@@ -1,16 +1,11 @@
 ---
-
-- name: Copy K3s service file
-  template:
-    src: "k3s.service.j2"
-    dest: "{{ systemd_dir }}/k3s-node.service"
-    owner: root
-    group: root
-    mode: 0755
-
-- name: Enable and check K3s service
-  systemd:
-    name: k3s-node
-    daemon_reload: yes
-    state: restarted
-    enabled: yes
+- name: Install K3s on nodes (worker)
+  ansible.builtin.shell: >-
+    INSTALL_K3S_VERSION="{{ k3s_version | default('') }}"
+    INSTALL_K3S_EXEC="{{ extra_agent_args | default('') }}"
+    K3S_URL="https://{{ groups['master'][0] }}:6443"
+    K3S_TOKEN="{{ hostvars[groups['master'][0]]['node_token'] }}"
+    ~/k3s_install.sh >> ~/k3s_install_log.txt
+  args:
+    chdir: "~"
+    creates: /var/lib/rancher/k3s/agent/kubelet.kubeconfig
